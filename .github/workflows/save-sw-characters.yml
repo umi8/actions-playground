@@ -1,0 +1,29 @@
+name: Save Star Wars Characters
+
+on:
+  workflow_dispatch:
+
+jobs:
+  save_characters:
+    runs-on: ubuntu-latest
+    env:
+      JOB_ID: ${{ github.run_id }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Get character names
+        run: |
+          names=$(curl --silent "https://swapi.dev/api/people/" | jq -r '.results[].name' | shuf -n 10)
+          file_name="sw_${JOB_ID}.csv"
+          echo "$names" > $file_name
+
+      - name: Upload file to issue
+        run: |
+          gh issue create -t "Star Wars Characters" -b "Here are 10 random Star Wars characters:" -F sw_${JOB_ID}.csv
